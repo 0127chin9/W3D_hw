@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<div id="info">
+	Xmas Tree I3B38<br>
+	<input type="button" value="簡單模式" onclick="location.href='javascript:simpleMode()'" id="simpleModeBut">
+	<input type="button" value="複雜模式" onclick="location.href='javascript:complexMode()'" id="complexModeBut"><br>
+</div>
+<style>
+	#info {
+		position: absolute;
+		width: 99%;
+		text-align: center;
+		font-size: 20px;
+		color: #722304
+	}
+	#tree {
+		position: absolute;
+		top: 80px;
+		width: 99%;
+		
+		padding: 5px;
+		text-align: center;
+		font-size: 20px;
+		color: #722304
+	}
+	.light {
+		position: absolute;
+
+		width: 15px;
+		height: 15px;
+		border-radius: 50%;
+		background: gray;
+	}
+</style>
+</head>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<body>
+	<div id="tree">
+		<img src="tree.png" width="500px" height="600px">
+	</div>
+	
+	<div style="top: 110px; left: 47%;" class="light" id="light1"></div>
+	<div style="top: 123px; left: 49%;" class="light" id="light2"></div>
+	<div style="top: 130px; left: 52%;" class="light" id="light3"></div>
+	<div style="top: 170px; left: 47%;" class="light" id="light4"></div>
+	<div style="top: 165px; left: 50%;" class="light" id="light5"></div>
+	<div style="top: 265px; left: 56%;" class="light" id="light6"></div>
+	<div style="top: 260px; left: 50%;" class="light" id="light7"></div>
+	<div style="top: 260px; left: 46%;" class="light" id="light8"></div>
+	<div style="top: 215px; left: 53%;" class="light" id="light9"></div>
+	<div style="top: 225px; left: 42%;" class="light" id="light10"></div>
+	<div style="top: 205px; left: 45%;" class="light" id="light11"></div>
+	<div style="top: 300px; left: 53%;" class="light" id="light12"></div>
+	<div style="top: 350px; left: 49%;" class="light" id="light13"></div>
+	<div style="top: 320px; left: 42%;" class="light" id="light14"></div>
+	<div style="top: 320px; left: 55%;" class="light" id="light15"></div>
+	<div style="top: 360px; left: 44%;" class="light" id="light16"></div>
+	<div style="top: 355px; left: 53%;" class="light" id="light17"></div>
+	<div style="top: 370px; left: 59%;" class="light" id="light18"></div>
+	<div style="top: 450px; left: 42%;" class="light" id="light19"></div>
+	<div style="top: 430px; left: 50%;" class="light" id="light20"></div>
+	<div style="top: 440px; left: 55%;" class="light" id="light21"></div>
+</body>
+
+<script>
+class LightBall {
+  constructor(name) {
+    this.name = name;
+    this.lightOn = false;
+    this.hue = Math.random() * 360;
+    let lightColor = document.querySelector(name);
+    lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 20%)`;
+  }
+
+  blink() {
+    if (this.lightOn) {
+      let lightColor = document.querySelector(this.name);
+      lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 80%)`;
+      let that = this;
+      setTimeout(() => {
+        this.dark();
+      }, 500);
+    }
+  }
+
+  dark() {
+    let lightColor = document.querySelector(this.name);
+    lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 20%)`;
+    if (this.lightOn) {
+      let that = this;
+      setTimeout(() => {
+        this.blink();
+      }, 500);
+    }
+  }
+
+  randomBlink() {
+    if (this.lightOn) {
+      let lightColor = document.querySelector(this.name);
+      lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 80%)`;
+      let that = this;
+      setTimeout(() => {
+        this.randomDark();
+      }, Math.floor(Math.random() * (1001)) + 1000);
+    }
+  }
+
+  randomDark() {
+    let lightColor = document.querySelector(this.name);
+    lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 20%)`;
+    if (this.lightOn) {
+      let that = this;
+      setTimeout(() => {
+        this.randomBlink();
+      }, Math.floor(Math.random() * (1001)) + 1000);
+    }
+  }
+}
+
+var lightBalls = [];
+for (let i = 1; i < 22; i++) {
+  lightBalls[i - 1] = new LightBall('#light' + i);
+}
+
+function simpleMode() {
+  if (!lightBalls[0].lightOn) {
+    let printSwitch = document.querySelector('#simpleModeBut');
+    printSwitch.value = "關燈";
+    for (let i = 0; i < 21; i++) {
+      lightBalls[i].lightOn = true;
+      lightBalls[i].blink();
+    }
+  } else {
+    let printSwitch = document.querySelector('#simpleModeBut');
+    printSwitch.value = "簡單模式";
+    for (let i = 0; i < 21; i++) {
+      lightBalls[i].lightOn = false;
+      lightBalls[i].dark();
+    }
+  }
+}
+
+function complexMode() {
+  if (!lightBalls[0].lightOn) {
+    let printSwitch = document.querySelector('#complexModeBut');
+    printSwitch.value = "關燈";
+    for (let i = 0; i < 21; i++) {
+      lightBalls[i].lightOn = true;
+      lightBalls[i].randomDark();
+    }
+  } else {
+    let printSwitch = document.querySelector('#complexModeBut');
+    printSwitch.value = "複雜模式";
+    for (let i = 0; i < 21; i++) {
+      lightBalls[i].lightOn = false;
+      lightBalls[i].dark();
+    }
+  }
+}
+</script>
+
+
+</html>
