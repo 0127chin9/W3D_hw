@@ -130,6 +130,7 @@ function simpleMode() {
   if (!lightBalls[0].lightOn) {
     let printSwitch = document.querySelector('#simpleModeBut');
     printSwitch.value = "關燈";
+	document.querySelector("#complexModeBut").setAttribute("disabled", "disabled");
     for (let i = 0; i < 21; i++) {
       lightBalls[i].lightOn = true;
       lightBalls[i].blink();
@@ -141,6 +142,7 @@ function simpleMode() {
       lightBalls[i].lightOn = false;
       lightBalls[i].dark();
     }
+	document.querySelector('#complexModeBut').removeAttribute('disabled');
   }
 }
 
@@ -148,6 +150,7 @@ function complexMode() {
   if (!lightBalls[0].lightOn) {
     let printSwitch = document.querySelector('#complexModeBut');
     printSwitch.value = "關燈";
+	document.querySelector("#simpleModeBut").setAttribute("disabled", "disabled");
     for (let i = 0; i < 21; i++) {
       lightBalls[i].lightOn = true;
       lightBalls[i].randomDark();
@@ -159,6 +162,7 @@ function complexMode() {
       lightBalls[i].lightOn = false;
       lightBalls[i].dark();
     }
+	document.querySelector('#simpleModeBut').removeAttribute('disabled');
   }
 }
 </script>
