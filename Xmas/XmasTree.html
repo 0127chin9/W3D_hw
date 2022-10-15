@@ -72,14 +72,16 @@ class LightBall {
     this.name = name;
     this.lightOn = false;
     this.hue = Math.random() * 360;
-    let lightColor = document.querySelector(name);
-    lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 20%)`;
+    $(this.name).css({
+      "backgroundColor": `hsl(${this.hue}, 90%, 20%)`
+    });
   }
 
   blink() {
     if (this.lightOn) {
-      let lightColor = document.querySelector(this.name);
-      lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 80%)`;
+      $(this.name).css({
+        "backgroundColor": `hsl(${this.hue}, 90%, 80%)`
+      });
       let that = this;
       setTimeout(() => {
         this.dark();
@@ -88,8 +90,9 @@ class LightBall {
   }
 
   dark() {
-    let lightColor = document.querySelector(this.name);
-    lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 20%)`;
+    $(this.name).css({
+      "backgroundColor": `hsl(${this.hue}, 90%, 20%)`
+    });
     if (this.lightOn) {
       let that = this;
       setTimeout(() => {
@@ -100,8 +103,9 @@ class LightBall {
 
   randomBlink() {
     if (this.lightOn) {
-      let lightColor = document.querySelector(this.name);
-      lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 80%)`;
+      $(this.name).css({
+        "backgroundColor": `hsl(${this.hue}, 90%, 80%)`
+      });
       let that = this;
       setTimeout(() => {
         this.randomDark();
@@ -110,8 +114,9 @@ class LightBall {
   }
 
   randomDark() {
-    let lightColor = document.querySelector(this.name);
-    lightColor.style.backgroundColor = `hsl(${this.hue}, 90%, 20%)`;
+    $(this.name).css({
+      "backgroundColor": `hsl(${this.hue}, 90%, 20%)`
+    });
     if (this.lightOn) {
       let that = this;
       setTimeout(() => {
@@ -128,44 +133,38 @@ for (let i = 1; i < 22; i++) {
 
 function simpleMode() {
   if (!lightBalls[0].lightOn) {
-    let printSwitch = document.querySelector('#simpleModeBut');
-    printSwitch.value = "關燈";
-	document.querySelector("#complexModeBut").setAttribute("disabled", "disabled");
+    $('#simpleModeBut').val("關燈");
+    $('#complexModeBut').attr("disabled", "true");
     for (let i = 0; i < 21; i++) {
       lightBalls[i].lightOn = true;
       lightBalls[i].blink();
     }
   } else {
-    let printSwitch = document.querySelector('#simpleModeBut');
-    printSwitch.value = "簡單模式";
+    $('#simpleModeBut').val("簡單模式");
+    $('#complexModeBut').removeAttr("disabled");
     for (let i = 0; i < 21; i++) {
       lightBalls[i].lightOn = false;
       lightBalls[i].dark();
     }
-	document.querySelector('#complexModeBut').removeAttribute('disabled');
   }
 }
 
 function complexMode() {
   if (!lightBalls[0].lightOn) {
-    let printSwitch = document.querySelector('#complexModeBut');
-    printSwitch.value = "關燈";
-	document.querySelector("#simpleModeBut").setAttribute("disabled", "disabled");
+    $('#complexModeBut').val("關燈");
+    $('#simpleModeBut').attr("disabled", "true");
     for (let i = 0; i < 21; i++) {
       lightBalls[i].lightOn = true;
       lightBalls[i].randomDark();
     }
   } else {
-    let printSwitch = document.querySelector('#complexModeBut');
-    printSwitch.value = "複雜模式";
+    $('#complexModeBut').val("複雜模式");
+    $('#simpleModeBut').removeAttr("disabled");
     for (let i = 0; i < 21; i++) {
       lightBalls[i].lightOn = false;
       lightBalls[i].dark();
     }
-	document.querySelector('#simpleModeBut').removeAttribute('disabled');
   }
 }
 </script>
-
-
 </html>
