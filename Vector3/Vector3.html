@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>I3B38 Vector3</h1>
+<style>
+#v {
+  border-radius: 25px;
+  background: #E8E8D0;
+  border: 3px solid #000093;
+  position: absolute;
+  top: 5vw;
+  left: 1vw;
+  padding: 20px;
+  width: 225px;
+  height: 225px;
+}
+
+#w {
+  border-radius: 25px;
+  background: #E8E8D0;
+  border: 3px solid #01814A;
+  position: absolute;
+  top: 21.35vw;
+  left: 1vw;
+  padding: 20px;
+  width: 225px;
+  height: 225px;
+}
+
+#sol {
+  border-radius: 25px;
+  background: #E8E8D0;
+  border: 3px solid #8C8C00;
+  position: absolute;
+  top: 5vw;
+  left: 20vw;
+  padding: 20px;
+  width: 225px;
+  height: 540px;
+}
+</style>
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+function calculate() {
+  var x1 = $('#x1').val();
+  var y1 = $('#y1').val();
+  var z1 = $('#z1').val();
+
+  var x2 = $('#x2').val();
+  var y2 = $('#y2').val();
+  var z2 = $('#z2').val();
+
+  if (!wrong()) {
+    var v = new THREE.Vector3(x1, y1, z1);
+    var w = new THREE.Vector3(x2, y2, z2);
+    var vdot = v.clone().dot(w);
+    var vcross = v.clone().cross(w);
+    dot.value = vdot;
+    cx.value = vcross.x;
+    cy.value = vcross.y;
+    cz.value = vcross.z;
+  }
+}
+
+function wrong() {
+  if (isNaN($('#x1').val())) {
+    alert("請輸入數字");
+    $('#x1').val("");
+    return true;
+  }
+  if (isNaN($('#y1').val())) {
+    alert("請輸入數字");
+    $('#y1').val("");
+    return true;
+  }
+  if (isNaN($('#z1').val())) {
+    alert("請輸入數字");
+    $('#z1').val("");
+    return true;
+  }
+  if (isNaN($('#x2').val())) {
+    alert("請輸入數字");
+    $('#x2').val("");
+    return true;
+  }
+  if (isNaN($('#y2').val())) {
+    alert("請輸入數字");
+    $('#y2').val("");
+    return true;
+  }
+  if (isNaN($('#z2').val())) {
+    alert("請輸入數字");
+    $('#z2').val("");
+    return true;
+  }
+  return false;
+}
+
+</script>
+<div id="sol">
+  <font size="5"><b>Inner product</b></font><br>
+  <hr>
+  <font size="5"><b>v．w</b></font> &ensp;<input type="text" style="width:140px; height:30px; font-size:24px;" id="dot" size="20"><br><br><br>
+  <br><br><br><br><br><br>
+  <font size="5"><b>v × w<br>(vector product)</b></font><br>
+  <hr>
+  <font size="5"><b>x</b></font> &ensp;<input type="text" style="width:140px; height:30px; font-size:24px;" id="cx" size="20"><br><br><br>
+  <font size="5"><b>y</b></font> &ensp;<input type="text" style="width:140px; height:30px; font-size:24px;" id="cy" size="20"><br><br><br>
+  <font size="5"><b>z</b></font> &ensp;<input type="text" style="width:140px; height:30px; font-size:24px;" id="cz" size="20"><br><br><br>
+</div>
+<div id="v">
+  <font size="5"><b>v</b></font><br>
+  <hr>
+  <font size="5"><b>x</b></font> &ensp;<input type="text" onchange="calculate(this);" style="width:140px; height:30px; font-size:24px;" id="x1" size="20"><br><br><br>
+  <font size="5"><b>y</b></font> &ensp;<input type="text" onchange="calculate(this);" style="width:140px; height:30px; font-size:24px;" id="y1" size="20"><br><br><br>
+  <font size="5"><b>z</b></font> &ensp;<input type="text" onchange="calculate(this);" style="width:140px; height:30px; font-size:24px;" id="z1" size="20"><br><br><br>
+</div>
+<div id="w">
+  <font size="5"><b>w</b></font><br>
+  <hr>
+  <font size="5"><b>x</b></font> &ensp;<input type="text" onchange="calculate(this);" style="width:140px; height:30px; font-size:24px;" id="x2" size="20"><br><br><br>
+  <font size="5"><b>y</b></font> &ensp;<input type="text" onchange="calculate(this);" style="width:140px; height:30px; font-size:24px;" id="y2" size="20"><br><br><br>
+  <font size="5"><b>z</b></font> &ensp;<input type="text" onchange="calculate(this);" style="width:140px; height:30px; font-size:24px;" id="z2" size="20"><br><br><br>
+</div>
+</body>
+</html>
