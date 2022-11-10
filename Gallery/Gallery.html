@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<div id="info">I3B38 Gallery</div>
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<style>
+	body {
+	  background-color: #fff;
+	  color: #111;
+	  margin: 0px;
+	  overflow: hidden;
+	  font-family: Monospace;
+	  font-size: 20px;
+	  position: absolute;
+	}
+
+	#info {
+	  position: absolute;
+	  top: 0px;
+	  width: 100%;
+	  padding: 5px;
+	  text-align: center;
+	  color: #FFFFFF
+	}
+
+	#button {
+	  position: absolute;
+	  top: 10%;
+	  width: 100%;
+	  text-align: center;
+	}
+
+</style>
+</head>
+<body>
+<div id='button'>
+  <input type="button" value="切換視角" id="view">
+  <input type="button" value="聚光燈 (開)" id="powerOn">
+  <input type="button" value="聚光燈 (關)" id="powerOff">
+</div>
+</body>
+
+<script>
+var camera1, camera2, scene, renderer;
+var loader = new THREE.TextureLoader();
+var spotLights = [];
+var paintings = [];
+var walls = [];
+var onlyPipes = [];
+var chairs = [];
+
+var cameraSwitch = true;
+var controls;
+
+class spotLight {
+  constructor(x, painting) {
+    this.x = x;
+    this.spotLight = new THREE.SpotLight(0xffffff, 1, 120, Math.PI / 6, 0.5);
+    this.spotLight.position.set(x, 80, 40);
+
+    let temp = new THREE.Mesh(
+      new THREE.CylinderGeometry(10, 5, 10, 5),
+      new THREE.MeshPhongMaterial({
+        color: 0xffffff
+      })
+    );
+    temp.rotation.x = Math.PI / 2;
+    let light = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(5, 3),
+      new THREE.MeshBasicMaterial({
+        color: '#FFFFCE'
+      })
+    );
+    light.position.set(0, 0, 5);
+    this.group = new THREE.Object3D();
+    this.group.add(temp, light);
+    this.group.position.set(0, 80, 40);
+
+    this.spotLight.target = painting;
+    this.group.lookAt(painting.position);
+
+    scene.add(this.spotLight, this.group);
+  }
+
+  turnOnLight() {
+    this.spotLight.intensity = 1;
+  }
+
+  turnOffLight() {
+    this.spotLight.intensity = 0;
+  }
+
+  changeTarget(painting) {
+    this.lamp.lookAt(painting.position);
+  }
+}
+
+class painting {
+  constructor(x, y, hight, width, frameURL, picURL) {
+    this.x = x;
+    this.y = y;
+
+    this.paint = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, hight),
+      new THREE.MeshPhongMaterial({
+        map: loader.load(picURL),
+        polygonOffset: true,
+        polygonOffsetFactor: -1.0,
+        polygonOffsetUnits: -4.0
+      })
+    );
+
+    this.frame = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, hight),
+      new THREE.MeshPhongMaterial({
+        map: loader.load(frameURL),
+        transparent: true,
+        polygonOffset: true,
+        polygonOffsetFactor: -1.0,
+        polygonOffsetUnits: -4.0
+      })
+    );
+    this.paint.position.set(x, y, 5);
+    this.frame.position.set(x, y, 5);
+
+    this.group = new THREE.Object3D();
+    this.group.add(this.paint, this.frame);
+
+    scene.add(this.group);
+  }
+}
+
+class wall {
+  constructor(width) {
+    this.wall = new THREE.Mesh(
+      new THREE.BoxGeometry(width, 80, 10),
+      new THREE.MeshPhongMaterial({
+        map: loader.load('https://i.imgur.com/jWs8Xqn.jpg')
+      })
+    );
+    this.wall.position.set(0, 40, 0);
+
+    this.crashPlate = new THREE.Mesh(
+      new THREE.BoxGeometry(width + 5, 5, 15),
+      new THREE.MeshPhongMaterial({
+        color: 0x000000
+      })
+    );
+    this.crashPlate.position.set(0, 2.5, 0);
+
+    this.pipe = new THREE.Mesh(
+      new THREE.CylinderGeometry(3, 3, width, 20),
+      new THREE.MeshPhongMaterial()
+    );
+    this.pipe.position.set(0, 84, 45);
+    this.pipe.rotation.z = Math.PI / 2;
+
+    this.group = new THREE.Object3D();
+    this.group.add(this.wall, this.crashPlate, this.pipe);
+
+    scene.add(this.group);
+  }
+}
+
+class onlyPipe {
+  constructor(width) {
+    this.pipe = new THREE.Mesh(
+      new THREE.CylinderGeometry(3, 3, width, 20),
+      new THREE.MeshPhongMaterial()
+    );
+    this.pipe.position.set(0, 84, 45);
+    this.pipe.rotation.z = Math.PI / 2;
+
+    this.group = new THREE.Object3D();
+    this.group.add(this.pipe);
+
+    scene.add(this.group);
+  }
+}
+
+class chair {
+  constructor(x, z) {
+    let chair1 = new THREE.Mesh(
+      new THREE.BoxGeometry(5, 20, 15),
+      new THREE.MeshPhongMaterial({
+        map: loader.load('https://i.imgur.com/NFsTgZ5.jpg')
+      })
+    );
+    chair1.position.set(-20, 10, 0);
+
+    let chair2 = new THREE.Mesh(
+      new THREE.BoxGeometry(5, 20, 15),
+      new THREE.MeshPhongMaterial({
+        map: loader.load('https://i.imgur.com/NFsTgZ5.jpg')
+      })
+    );
+    chair2.position.set(20, 10, 0);
+
+    let chair3 = new THREE.Mesh(
+      new THREE.BoxGeometry(45, 5, 15),
+      new THREE.MeshPhongMaterial({
+        map: loader.load('https://i.imgur.com/mmEey8d.jpg')
+      })
+    );
+    chair3.position.set(0, 22.5, 0);
+
+    this.group = new THREE.Group();
+    this.group.add(chair1, chair2, chair3);
+    this.group.position.set(x, 0, z);
+
+    scene.add(this.group);
+  }
+}
+
+function init() {
+  scene = new THREE.Scene();
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000);
+  document.body.appendChild(renderer.domElement);
+  camera1 = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 2000);
+  camera1.position.set(0, 550, 520);
+  controls = new THREE.OrbitControls(camera1, renderer.domElement);
+
+  camera2 = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 1000);
+  camera2.position.set(0, 40, 0);
+  document.body.appendChild(renderer.domElement);
+  ////////////////////////////////////////////////////////
+  ///自然光///
+  const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+  directionalLight1.position.set(0, 40, 250);
+  const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.6);
+  directionalLight2.position.set(0, 40, -250);
+  const directionalLight3 = new THREE.DirectionalLight(0xffffff, 0.6);
+  directionalLight3.position.set(400, 40, 0);
+  const directionalLight4 = new THREE.DirectionalLight(0xffffff, 0.6);
+  directionalLight4.position.set(-400, 40, 0);
+  scene.add(directionalLight1, directionalLight2, directionalLight3, directionalLight4);
+
+  ///地板///
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(800, 500),
+    new THREE.MeshBasicMaterial({
+      map: loader.load('https://i.imgur.com/jWs8Xqn.jpg'),
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -1.0,
+      polygonOffsetUnits: -4.0
+    })
+  );
+  floor.rotation.x = Math.PI / 2;
+  scene.add(floor);
+
+  ///牆壁///
+  const wall1 = new THREE.Mesh(
+    new THREE.PlaneGeometry(800, 80),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/jWs8Xqn.jpg'),
+    })
+  );
+  wall1.position.set(0, 40, -250);
+
+  const wall2 = new THREE.Mesh(
+    new THREE.PlaneGeometry(800, 80),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/jWs8Xqn.jpg'),
+    })
+  );
+  wall2.rotation.y = Math.PI;
+  wall2.position.set(0, 40, 250);
+
+  const wall3 = new THREE.Mesh(
+    new THREE.PlaneGeometry(500, 80),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/jWs8Xqn.jpg'),
+    })
+  );
+  wall3.rotation.y = -Math.PI / 2;
+  wall3.position.set(400, 40, 0);
+
+  const wall4 = new THREE.Mesh(
+    new THREE.PlaneGeometry(500, 80),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/jWs8Xqn.jpg'),
+    })
+  );
+  wall4.rotation.y = Math.PI / 2;
+  wall4.position.set(-400, 40, 0);
+
+  scene.add(wall1, wall2, wall3, wall4);
+
+  ///大門///
+  const door = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 80),
+    new THREE.MeshBasicMaterial({
+      map: loader.load('https://i.imgur.com/PCJMZSJ.png'),
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -1.0,
+      polygonOffsetUnits: -4.0
+    })
+  );
+  door.position.set(0, 40, 250);
+  scene.add(door);
+
+  ///椅子///
+  chairs[0] = new chair(0, 0);
+  chairs[1] = new chair(0, 120);
+  chairs[2] = new chair(180, 240);
+  chairs[3] = new chair(-180, 240);
+  chairs[4] = new chair(180, -240);
+  chairs[5] = new chair(-180, -240);
+  chairs[6] = new chair(300, 0);
+  chairs[6].group.rotation.y = Math.PI / 2;
+  chairs[7] = new chair(-300, 0);
+  chairs[7].group.rotation.y = Math.PI / 2;
+  ////////////////////////////////////////////////////////
+  //鳥
+  paintings[0] = new painting(0, 40, 35, 35, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/h6tBjYj.jpg');
+  spotLights[0] = new spotLight(0, paintings[0].paint);
+  walls[0] = new wall(120);
+
+  let group0 = new THREE.Group();
+  group0.add(paintings[0].group, spotLights[0].group, walls[0].group);
+  group0.position.set(0, 0, -140);
+  spotLights[0].spotLight.position.set(0, 80, -100);
+  //鐵塔
+  paintings[1] = new painting(0, 40, 40, 35, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/v93eYBP.jpg');
+  100,
+  spotLights[1] = new spotLight(0, paintings[1].paint);
+  walls[1] = new wall(120);
+
+  let group1 = new THREE.Group();
+  group1.add(paintings[1].group, spotLights[1].group, walls[1].group);
+  group1.rotation.y = -Math.PI / 2;
+  group1.position.set(180, 0, 60);
+  spotLights[1].spotLight.position.set(140, 80, 60);
+  //夕陽
+  paintings[2] = new painting(0, 40, 40, 60, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/L6ml6zc.jpg');
+  100,
+  spotLights[2] = new spotLight(0, paintings[2].paint);
+  walls[2] = new wall(120);
+
+  let group2 = new THREE.Group();
+  group2.add(paintings[2].group, spotLights[2].group, walls[2].group);
+  group2.rotation.y = Math.PI / 2;
+  group2.position.set(-180, 0, 60);
+  spotLights[2].spotLight.position.set(-140, 80, 60);
+  //貓咪1
+  paintings[3] = new painting(0, 40, 40, 35, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/vkdZiQy.jpg');
+  100,
+  spotLights[3] = new spotLight(0, paintings[3].paint);
+  onlyPipes[0] = new onlyPipe(500);
+
+  let group3 = new THREE.Group();
+  group3.add(paintings[3].group, spotLights[3].group, onlyPipes[0].group);
+  group3.rotation.y = Math.PI / 2;
+  group3.position.set(-405, 0, 0);
+  spotLights[3].spotLight.position.set(-365, 80, 0);
+  //貓咪2
+  paintings[4] = new painting(0, 40, 40, 35, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/GjVW40P.jpg');
+  100,
+  spotLights[4] = new spotLight(0, paintings[4].paint);
+
+  let group4 = new THREE.Group();
+  group4.add(paintings[4].group, spotLights[4].group);
+  group4.rotation.y = Math.PI / 2;
+  group4.position.set(-405, 0, 200);
+  spotLights[4].spotLight.position.set(-365, 80, 200);
+  //貓咪3
+  paintings[5] = new painting(0, 40, 40, 35, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/f5gMPBZ.jpg');
+  100,
+  spotLights[5] = new spotLight(0, paintings[5].paint);
+
+  let group5 = new THREE.Group();
+  group5.add(paintings[5].group, spotLights[5].group);
+  group5.rotation.y = Math.PI / 2;
+  group5.position.set(-405, 0, -200);
+  spotLights[5].spotLight.position.set(-365, 80, -200);
+  //樂高1
+  paintings[6] = new painting(0, 40, 40, 65, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/Azxxd0p.jpg');
+  100,
+  spotLights[6] = new spotLight(0, paintings[6].paint);
+  onlyPipes[1] = new onlyPipe(500);
+
+  let group6 = new THREE.Group();
+  group6.add(paintings[6].group, spotLights[6].group, onlyPipes[1].group);
+  group6.rotation.y = -Math.PI / 2;
+  group6.position.set(405, 0, 0);
+  spotLights[6].spotLight.position.set(365, 80, 0);
+  //樂高2
+  paintings[7] = new painting(0, 40, 40, 35, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/IbktmkY.jpg');
+  100,
+  spotLights[7] = new spotLight(0, paintings[7].paint);
+
+  let group7 = new THREE.Group();
+  group7.add(paintings[7].group, spotLights[7].group);
+  group7.rotation.y = -Math.PI / 2;
+  group7.position.set(405, 0, 200);
+  spotLights[7].spotLight.position.set(365, 80, 200);
+  //樂高3
+  paintings[8] = new painting(0, 40, 40, 35, 'https://i.imgur.com/kV0fJEC.png', 'https://i.imgur.com/X06mPrk.jpg');
+  100,
+  spotLights[8] = new spotLight(0, paintings[8].paint);
+
+  let group8 = new THREE.Group();
+  group8.add(paintings[8].group, spotLights[8].group);
+  group8.rotation.y = -Math.PI / 2;
+  group8.position.set(405, 0, -200);
+  spotLights[8].spotLight.position.set(365, 80, -200);
+
+  scene.add(group0, group1, group2, group3, group4, group5, group6, group7, group8);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  if (cameraSwitch)
+    renderer.render(scene, camera1);
+  else
+    renderer.render(scene, camera2);
+}
+
+init();
+animate();
+
+$('#view').click(function() {
+  cameraSwitch = !cameraSwitch;
+})
+
+$('#powerOn').click(function() {
+  for(let i=0;i<=8;i++){
+  	spotLights[i].turnOnLight();
+  }
+})
+
+$('#powerOff').click(function() {
+  for(let i=0;i<=8;i++){
+  	spotLights[i].turnOffLight();
+  }
+})
+</script>
+</html>
