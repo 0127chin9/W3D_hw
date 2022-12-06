@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+
+<html>
+
+<style>
+	.btn-grid {
+	  display: grid;
+	  grid-template-columns: repeat(3, auto);
+	  gap: 10px;
+	}
+</style>
+
+<head>
+<h1 style="text-align:center"> I3B38 Homework 4 Patio Design </h1>
+<hr>
+<div id="container" style="float:left; margin:3px; width:60vw; height:40vw"></div>
+<div style="float:left; margin-left: 10px; width:32vw;">
+  <div>
+    Geometry Size:
+    <br>
+    <input id="size" type="range" min=1 max=2 value=1 step=0.01>
+    <span id='sizePrint'>1</span>
+    <br>
+    Geometry Rotate:
+    <br>
+    <input id="rotate" type="range" min=0 max=6.28 value=0 step=0.01>
+    <span id='rotatePrint'>0</span>
+    <br>
+  </div>
+  <br>
+  <div style='background-color:#DEB887;'>
+    Furniture Selector:
+    <br>
+    <input type=radio name='furniture' id='chair' value='1' checked> Chair
+    <input type=radio name='furniture' id='desk' value='2'> Desk
+    <br>
+    <img src="https://i.imgur.com/4eoPXNB.png" width="50%" height="50%" object-fit="cover" id='pic'>
+  </div>
+  <hr>
+  <div style="background-color:#F5F5DC">
+    Mode Selector:
+    <br>
+    <input type=radio class='gclass' id='place' name='g' value='place' checked> Place <br>
+    <input type=radio class='gclass' id='delete' name='g' value='delete'> Delete<br>
+    <input type=radio class='gclass' id='move' name='g' value='move'> Move<br>
+  </div>
+  <hr>
+  <div class="btn-grid">
+    <button id='clear'>Clear</button>
+    <button id='save'>Save</button>
+    <button id='restore'>Restore</button>
+  </div>
+  <hr>
+  Keyboard Shortcut Hint<br><br>
+  W = Size ++<br>
+  S = Size --<br>
+  D = Rotate ++<br>
+  A = Rotate --<br>
+  F = Change furniture<br>
+  1 = Place mode<br>
+  2 = Delete mode<br>
+  3 = Move mode
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+<script>
+var camera, scene, renderer, controls;
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+var pickplane;
+var cyl = new THREE.Object3D();
+var meshes = [];
+var item = null;
+
+$('.gclass').click(function() {
+  if ($(this).val() === 'place') {
+    cyl.visible = true;
+  } else if ($(this).val() === 'delete') {
+    cyl.visible = false;
+  } else {
+    cyl.visible = false;
+  }
+});
+
+init();
+animate();
+
+$('#clear').click(function() {
+  meshes.forEach(function(mesh) {
+    scene.remove(mesh);
+  });
+  meshes = [];
+});
+
+$('#save').click(function() {
+  var states = [];
+  meshes.forEach(function(mesh) {
+    states.push(mesh.name);
+  });
+  localStorage.setItem('stateStr', JSON.stringify(states));
+});
+
+$('#restore').click(function() {
+  try {
+    var states = JSON.parse(localStorage.getItem('stateStr'));
+    states.forEach(function(stateStr) {
+      var state = JSON.parse(stateStr);
+      if (state.fur == 1) {
+        buildChair(state.size, state.rotation, new THREE.Vector3(state.pos[0], 0, state.pos[1]));
+      } else if (state.fur == 2) {
+        buildDesk(state.size, state.rotation, new THREE.Vector3(state.pos[0], 0, state.pos[1]));
+      }
+    });
+  } catch (e) {
+    alert('尚未儲存任何資料');
+  }
+});
+
+/////////////////////////////////////
+function chairGeometry() {
+  var loader = new THREE.TextureLoader();
+
+  let chair1 = new THREE.Mesh(
+    new THREE.BoxGeometry(30, 1.5, 15),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/7aACjGO.jpg'),
+      polygonOffset: true,
+      polygonOffsetFactor: -1.0,
+      polygonOffsetUnits: -4.0
+    })
+  );
+  chair1.position.set(0, 10, 0);
+
+  let chair2 = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 10, 15),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/7aACjGO.jpg')
+    })
+  );
+  let a = 1 / Math.tan(1.22);
+  let localX = new THREE.Vector3(1, 0, 0);
+  let localY = new THREE.Vector3(a, 1, 0);
+  let localZ = new THREE.Vector3(0, 0, 1);
+  chair2.matrix.makeBasis(localX, localY, localZ);
+  chair2.matrix.setPosition(16.5, 14.3, 0);
+  chair2.matrixAutoUpdate = false;
+
+  let chair3 = new THREE.Mesh(
+    new THREE.BoxGeometry(35, 1.5, 20),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/yHROsy2.jpg'),
+      polygonOffset: true,
+      polygonOffsetFactor: 1.0,
+      polygonOffsetUnits: 4.0
+    })
+  );
+  chair3.position.set(0, 9, 0);
+
+  let chair4 = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 9, 3),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/yHROsy2.jpg'),
+      polygonOffset: true,
+      polygonOffsetFactor: 1.0,
+      polygonOffsetUnits: 4.0
+    })
+  );
+  let chair5 = chair4.clone();
+  let chair6 = chair4.clone();
+  let chair7 = chair4.clone();
+  chair4.position.set(10, 4.5, 8);
+  chair5.position.set(10, 4.5, -8);
+  chair6.position.set(-10, 4.5, 8);
+  chair7.position.set(-10, 4.5, -8);
+
+  var mesh = new THREE.Object3D();
+  mesh.add(chair1, chair2, chair3, chair4, chair5, chair6, chair7);
+
+  return mesh;
+}
+
+function buildChair(size, rotation, pos) {
+  var chair = chairGeometry();
+  var prop = {
+    fur: 1,
+    size: size,
+    rotation: rotation,
+    pos: [pos.x, pos.z]
+  };
+  chair.name = JSON.stringify(prop);
+  chair.scale.set(size, size, size);
+  chair.position.copy(pos);
+  chair.rotation.y = rotation;
+  meshes.push(chair);
+  scene.add(chair);
+}
+/////////////////////////////////////
+function deskGeometry() {
+  var loader = new THREE.TextureLoader();
+
+  let desk1 = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 1.5, 20),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/yHROsy2.jpg'),
+      polygonOffset: true,
+      polygonOffsetFactor: 1.0,
+      polygonOffsetUnits: 4.0
+    })
+  );
+  desk1.position.set(0, 9, 0);
+
+  let desk2 = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 9, 3),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/yHROsy2.jpg'),
+      polygonOffset: true,
+      polygonOffsetFactor: 1.0,
+      polygonOffsetUnits: 4.0
+    })
+  );
+
+  let desk3 = desk2.clone();
+  let desk4 = desk2.clone();
+  let desk5 = desk2.clone();
+  desk2.position.set(5, 4.5, 5);
+  desk3.position.set(5, 4.5, -5);
+  desk4.position.set(-5, 4.5, 5);
+  desk5.position.set(-5, 4.5, -5);
+
+  let desk6 = new THREE.Mesh(
+    new THREE.BoxGeometry(16, 1.5, 16),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/NFsTgZ5.jpg'),
+      polygonOffset: true,
+      polygonOffsetFactor: -1.0,
+      polygonOffsetUnits: -4.0
+    })
+  );
+  desk6.position.set(0, 10, 0);
+
+  var mesh = new THREE.Object3D();
+  mesh.add(desk1, desk2, desk3, desk4, desk5, desk6);
+
+  return mesh;
+}
+
+function buildDesk(size, rotation, pos) {
+  var desk = deskGeometry();
+  var prop = {
+    fur: 2,
+    size: size,
+    rotation: rotation,
+    pos: [pos.x, pos.z]
+  };
+  desk.name = JSON.stringify(prop);
+  desk.scale.set(size, size, size);
+  desk.position.copy(pos);
+  desk.rotation.y = rotation;
+  meshes.push(desk);
+  scene.add(desk);
+}
+
+/////////////////////////////////////
+
+function init() {
+  var loader = new THREE.TextureLoader();
+
+  var width = $("#container").innerWidth();
+  var height = $("#container").innerHeight();
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(width, height);
+  renderer.setClearColor(0x888888);
+  $("#container").append(renderer.domElement);
+
+  ////////////////////////////////////////////////
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(70, width / height, 1, 1800);
+  camera.position.y = 200;
+  camera.position.z = 460;
+  scene.add(camera);
+
+  cyl = chairGeometry();
+  scene.add(cyl);
+
+  pickplane = new THREE.Mesh(new THREE.PlaneGeometry(300, 300),
+    new THREE.MeshBasicMaterial({
+      color: 0xff1234
+    }));
+  pickplane.rotation.x = -Math.PI / 2;
+  scene.add(pickplane);
+  pickplane.material.visible = false;
+
+  ////////////////////////////////////////////////
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(0, 30, 0);
+  scene.add(directionalLight);
+
+  ////////////////////////////////////////////////
+
+  var grass = new THREE.Mesh(new THREE.PlaneGeometry(300, 300),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/TLK7GwP.jpg'),
+      alphaMap: loader.load('https://i.imgur.com/2dGoVpT.png'),
+      transparent: true,
+      side: THREE.DoubleSide
+    }));
+  grass.rotation.x = -Math.PI / 2;
+  scene.add(grass);
+
+  var floor = new THREE.Mesh(new THREE.PlaneGeometry(300, 300),
+    new THREE.MeshPhongMaterial({
+      map: loader.load('https://i.imgur.com/jWs8Xqn.jpg'),
+      alphaMap: loader.load('https://i.imgur.com/0mpgvuK.png'),
+      transparent: true,
+      side: THREE.DoubleSide
+    }));
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  ////////////////////////////////////////////////	
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  window.addEventListener('resize', onWindowResize, false);
+
+  $('#container').on("pointerdown", onMouseDown);
+  $('#container').on("pointermove", onMouseMove);
+  $('#container').on("pointerup", onMouseUp);
+  ////////////////////////////////////////////////
+
+
+  window.addEventListener('keydown', function(evt) {
+    var e = evt;
+    var keyCode = e.keyCode || e.which;
+
+    switch (keyCode) {
+      case 49:
+        $('#place').prop('checked', true);
+        cyl.visible = true;
+        break;
+      case 50:
+        $('#delete').prop('checked', true);
+        cyl.visible = false;
+        break;
+      case 51:
+        $('#move').prop('checked', true);
+        cyl.visible = false;
+        break;
+      case 65:
+        $('#rotate').val(Number($('#rotate').val()) - 0.1);
+        $('#rotatePrint').text($('#rotate').val());
+        break;
+      case 87:
+        $('#size').val(Number($('#size').val()) + 0.1);
+        $('#sizePrint').text($('#size').val());
+        break;
+      case 68:
+        $('#rotate').val(Number($('#rotate').val()) + 0.1);
+        $('#rotatePrint').text($('#rotate').val());
+        break;
+      case 83:
+        $('#size').val(Number($('#size').val()) - 0.1);
+        $('#sizePrint').text($('#size').val());
+        break;
+      case 70:
+        scene.remove(cyl);
+        if ($('input[name=furniture]:checked').val() == 1) {
+          $('#desk').prop('checked', true);
+          cyl = deskGeometry();
+        } else if ($('input[name=furniture]:checked').val() == 2) {
+          $('#chair').prop('checked', true);
+          cyl = chairGeometry();
+        }
+        cyl.scale.set($('#size').val(), $('#size').val(), $('#size').val());
+        cyl.rotation.y = $('#rotate').val();
+        if ($('input[name=g]:checked').val() != 'place') {
+          cyl.visible = false;
+        }
+        scene.add(cyl);
+        break;
+    }
+    cyl.scale.set($('#size').val(), $('#size').val(), $('#size').val());
+    cyl.rotation.y = $('#rotate').val();
+  });
+}
+
+function onWindowResize() {
+  var width = $("#container").innerWidth();
+  var height = $("#container").innerHeight();
+
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}
+
+function onMouseDown(event) {
+  event.preventDefault();
+
+  var viewportPos = $('#container').get(0).getBoundingClientRect();
+  mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+  mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+
+  if ($('input[name=g]:checked').val() == 'place') {
+    var intersects = raycaster.intersectObject(pickplane);
+    if (intersects.length > 0) {
+      cyl.position.copy(intersects[0].point);
+      if ($('input[name=furniture]:checked').val() == 1) {
+        buildChair($('#size').val(), $('#rotate').val(), intersects[0].point);
+      } else if ($('input[name=furniture]:checked').val() == 2) {
+        buildDesk($('#size').val(), $('#rotate').val(), intersects[0].point);
+      }
+    }
+  } else if ($('input[name=g]:checked').val() == 'delete') {
+    var intersects = raycaster.intersectObjects(meshes);
+    if (intersects.length > 0) {
+      item = intersects[0].object.parent;
+      item.removeFromParent();
+      for (let i = 0; i < meshes.length; i++) {
+        if (meshes[i] == item) {
+          meshes.splice(i, 1);
+          break;
+        }
+      }
+    }
+  } else {
+    var intersects = raycaster.intersectObjects(meshes);
+    if (intersects.length > 0) {
+      item = intersects[0].object.parent;
+    }
+  }
+}
+
+function onMouseUp(event) {
+  item = null;
+  controls.enabled = true;
+  if (meshes.length === 0) {
+    $('#place').prop('checked', true);
+    cyl.visible = true;
+  }
+}
+
+function onMouseMove(event) {
+  event.preventDefault();
+
+  var viewportPos = $('#container').get(0).getBoundingClientRect();
+  mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+  mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  var intersects = raycaster.intersectObject(pickplane);
+  if (intersects.length > 0) {
+    if (item != null) {
+      controls.enabled = false;
+      item.position.copy(intersects[0].point);
+
+      for (let i = 0; i < meshes.length; i++) {
+        if (meshes[i] == item) {
+          meshes[i].name = JSON.parse(meshes[i].name);
+          meshes[i].name.pos[0] = intersects[0].point.x;
+          meshes[i].name.pos[1] = intersects[0].point.z;
+          meshes[i].name = JSON.stringify( meshes[i].name);
+          break;
+        }
+      }
+    } else {
+      cyl.position.copy(intersects[0].point);
+      cyl.position.y = 2;
+    }
+  }
+}
+
+function animate() {
+  controls.update();
+  requestAnimationFrame(animate);
+  render();
+}
+
+function render() {
+  renderer.render(scene, camera);
+}
+
+$('input[name=furniture]').change(function() {
+  scene.remove(cyl);
+  if ($('input[name=furniture]:checked').val() == 1) {
+    cyl = chairGeometry();
+    $("#pic").attr("src", "https://i.imgur.com/4eoPXNB.png");
+  } else if ($('input[name=furniture]:checked').val() == 2) {
+    cyl = deskGeometry();
+    $("#pic").attr("src", "https://i.imgur.com/ecYQ7w5.png");
+  }
+  cyl.scale.set($('#size').val(), $('#size').val(), $('#size').val());
+  cyl.rotation.y = $('#rotate').val();
+  if ($('input[name=g]:checked').val() != 'place') {
+    cyl.visible = false;
+  }
+  scene.add(cyl);
+})
+
+$('#size').change(function() {
+  $('#sizePrint').text($(this).val());
+  cyl.scale.set($(this).val(), $(this).val(), $(this).val());
+});
+
+$('#rotate').change(function() {
+  $('#rotatePrint').text($(this).val());
+  cyl.rotation.y = $(this).val();
+});
+</script>
+</body>
+</html>
